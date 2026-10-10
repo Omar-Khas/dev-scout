@@ -1,5 +1,7 @@
 # Dev Scout
 
+**Website:** [omar-khas.github.io/dev-scout](https://omar-khas.github.io/dev-scout/)
+
 **An AI hiring agent that screens developer CVs for small companies.**
 
 Candidates apply by email or web form. Dev Scout reads each CV, finds and analyzes the candidate's GitHub, scores them against the criteria HR set for that role, and puts everyone in a live ranked dashboard with evidence, flags and tailored interview questions. HR gets an email the moment a new candidate is scored.

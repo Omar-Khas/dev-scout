@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev Scout: AI hiring agent</title>
+<meta name="description" content="Dev Scout is an AI hiring agent that screens developer CVs, analyzes GitHub and ranks candidates against the criteria HR sets for each role.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ccircle cx='14' cy='14' r='6' fill='none' stroke='white' stroke-width='3'/%3E%3Cpath d='M19 19l6 6' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f7fb;
+    --bg-alt: #eef0fb;
+    --card: #ffffff;
+    --text: #1b1d2a;
+    --muted: #555a70;
+    --border: #e2e4ef;
+    --accent: #4f46e5;
+    --accent-strong: #4338ca;
+    --accent-soft: #e0e7ff;
+    --accent-text: #3730a3;
+    --on-accent: #ffffff;
+    --good: #15803d;
+    --good-soft: #dcfce7;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --shadow: 0 1px 2px rgba(20, 22, 50, .05), 0 8px 24px rgba(20, 22, 50, .06);
+    --radius: 18px;
+    --focus: #4f46e5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1020;
+      --bg-alt: #15172b;
+      --card: #1b1d33;
+      --text: #ecedf7;
+      --muted: #a7abc6;
+      --border: #2c2f4b;
+      --accent: #818cf8;
+      --accent-strong: #a5b4fc;
+      --accent-soft: #272a52;
+      --accent-text: #c7d2fe;
+      --on-accent: #0f1020;
+      --good: #4ade80;
+      --good-soft: #14321f;
+      --warn: #fbbf24;
+      --warn-soft: #3a2c0c;
+      --bad: #f87171;
+      --bad-soft: #3b1717;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+      --focus: #a5b4fc;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-text); text-underline-offset: 3px; }
+  @media (prefers-color-scheme: dark) { a { color: var(--accent-strong); } }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 8px; }
+  .skip { position: absolute; left: -999px; top: 8px; background: var(--card); padding: 8px 14px; border-radius: 10px; z-index: 10; }
+  .skip:focus { left: 16px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  section { padding: 72px 0; }
+  section.alt { background: var(--bg-alt); }
+  h1, h2, h3 { line-height: 1.2; letter-spacing: -.02em; margin: 0 0 12px; }
+  h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0 0 12px; }
+  .lead { color: var(--muted); font-size: 1.08rem; max-width: 680px; margin-bottom: 32px; }
+  .eyebrow { display: inline-block; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); background: var(--accent-soft); padding: 4px 12px; border-radius: 999px; margin-bottom: 14px; }
+  @media (prefers-color-scheme: dark) { .eyebrow { color: var(--accent-text); } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 26px; }
+  .grid { display: grid; gap: 20px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .icon { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+  .icon svg { width: 26px; height: 26px; }
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li { position: relative; padding-left: 28px; margin-bottom: 10px; }
+  ul.clean li::before { content: ""; position: absolute; left: 4px; top: .6em; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+
+  /* Header */
+  header.top { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; }
+  .logo svg { width: 18px; height: 18px; }
+  nav.links { display: flex; gap: 18px; font-size: .92rem; }
+  nav.links a { color: var(--muted); text-decoration: none; }
+  nav.links a:hover { color: var(--text); }
+  @media (max-width: 760px) { nav.links { display: none; } }
+
+  /* Hero */
+  .hero { padding: 88px 0 72px; text-align: center; background: radial-gradient(1000px 420px at 50% -10%, var(--accent-soft), transparent 70%); }
+  .hero h1 { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 800; margin-bottom: 10px; }
+  .tagline { font-size: clamp(1.25rem, 3vw, 1.6rem); font-weight: 600; color: var(--accent-text); margin-bottom: 16px; }
+  @media (prefers-color-scheme: dark) { .tagline { color: var(--accent-strong); } }
+  .hero .desc { color: var(--muted); font-size: 1.12rem; max-width: 640px; margin: 0 auto 34px; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 16px 26px; border-radius: 14px; font-weight: 600; font-size: 1.05rem; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+  .btn svg { width: 20px; height: 20px; }
+  .btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .btn-primary:hover { background: var(--accent-strong); transform: translateY(-1px); }
+  .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .btn-secondary:hover { transform: translateY(-1px); border-color: var(--accent); }
+  .gh-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; font-size: .95rem; color: var(--muted); }
+  .gh-link svg { width: 16px; height: 16px; }
+  @media (max-width: 520px) { .btn { width: 100%; justify-content: center; } }
+
+  /* Steps */
+  .steps { counter-reset: step; }
+  .step { position: relative; display: flex; flex-direction: column; gap: 14px; }
+  .step-num { position: absolute; top: 20px; right: 22px; font-size: 3rem; font-weight: 800; line-height: 1; color: var(--accent-soft); }
+  @media (prefers-color-scheme: dark) { .step-num { color: #2e3263; } }
+  .step h3 { font-size: 1.3rem; margin: 0; }
+  .step ol { margin: 0; padding-left: 20px; }
+  .step ol li { margin-bottom: 6px; }
+  .pill { display: inline-block; font-size: .85rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); white-space: nowrap; }
+  @media (prefers-color-scheme: dark) { .pill { color: var(--accent-text); } }
+  .note { font-size: .93rem; color: var(--muted); background: var(--bg-alt); border-radius: 12px; padding: 12px 14px; margin: 0; }
+  section.alt .note { background: var(--bg); }
+  .mini-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; font-weight: 600; font-size: .95rem; text-decoration: none; background: var(--accent-soft); color: var(--accent-text); align-self: flex-start; }
+  .mini-btn:hover { background: var(--accent); color: var(--on-accent); }
+  .mini-btn svg { width: 18px; height: 18px; }
+  .clock { display: flex; align-items: center; gap: 12px; font-size: 1.6rem; font-weight: 700; }
+
+  /* Flow */
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; list-style: none; padding: 0; margin: 0; }
+  .flow li { display: flex; align-items: stretch; flex: 1 1 140px; min-width: 140px; }
+  .flow .node { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; }
+  .flow .node strong { font-size: .98rem; }
+  .flow .node .tech { font-size: .75rem; font-weight: 600; color: var(--accent-text); background: var(--accent-soft); border-radius: 999px; padding: 1px 8px; align-self: flex-start; }
+  @media (prefers-color-scheme: dark) { .flow .node .tech { color: var(--accent-text); } }
+  .flow .node span.d { font-size: .86rem; color: var(--muted); line-height: 1.45; }
+  .flow .arrow { display: grid; place-items: center; width: 26px; flex: none; color: var(--accent); }
+  .flow .arrow svg { width: 18px; height: 18px; }
+  .flow li:last-child .arrow { display: none; }
+  .flow .node.out { border-color: var(--accent); }
+  @media (max-width: 760px) {
+    .flow { flex-direction: column; }
+    .flow li { flex-direction: column; min-width: 0; }
+    .flow .arrow { width: 100%; height: 28px; }
+    .flow .arrow svg { transform: rotate(90deg); }
+  }
+
+  /* Scoring */
+  .formula { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: clamp(.85rem, 2.2vw, 1.02rem); background: var(--bg-alt); border-radius: 12px; padding: 16px 18px; overflow-x: auto; margin: 10px 0 16px; }
+  section.alt .formula { background: var(--bg); }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+  tfoot td { font-weight: 700; border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+  .fits { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-top: 8px; }
+  .fit { border-radius: 14px; padding: 14px 16px; font-weight: 600; display: flex; flex-direction: column; }
+  .fit small { font-weight: 500; font-size: .9rem; }
+  .fit.strong { background: var(--good-soft); color: var(--good); }
+  .fit.possible { background: var(--warn-soft); color: var(--warn); }
+  .fit.weak { background: var(--bad-soft); color: var(--bad); }
+  .fit small { color: var(--text); }
+
+  /* Mock candidate */
+  .mock { max-width: 760px; margin: 0 auto; position: relative; }
+  .tag-example { position: absolute; top: -12px; left: 24px; background: var(--accent); color: var(--on-accent); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; }
+  .mock-head { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .who { display: flex; gap: 14px; align-items: center; }
+  .avatar { width: 54px; height: 54px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); display: grid; place-items: center; font-weight: 700; font-size: 1.15rem; }
+  .who h3 { margin: 0; }
+  .who p { margin: 0; color: var(--muted); font-size: .92rem; }
+  .scorebox { display: flex; align-items: center; gap: 12px; }
+  .score { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+  .score small { font-size: 1rem; color: var(--muted); font-weight: 600; }
+  .badge { font-size: .85rem; font-weight: 700; border-radius: 999px; padding: 4px 12px; }
+  .badge.weak { background: var(--bad-soft); color: var(--bad); }
+  .crit { margin-bottom: 18px; }
+  .crit-top { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: .96rem; margin-bottom: 6px; }
+  .crit-top span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bar { height: 10px; border-radius: 999px; background: var(--bg-alt); overflow: hidden; }
+  section.alt .bar { background: var(--bg); }
+  .bar > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+  .crit p { font-size: .9rem; color: var(--muted); margin: 8px 0 0; }
+  .mock-cols { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 6px; }
+  .box { border-radius: 14px; padding: 14px 16px; font-size: .93rem; }
+  .box h4 { margin: 0 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+  .box p { margin: 0; }
+  .box.s { background: var(--good-soft); } .box.s h4 { color: var(--good); }
+  .box.c { background: var(--warn-soft); } .box.c h4 { color: var(--warn); }
+  .box.q { background: var(--accent-soft); grid-column: 1 / -1; } .box.q h4 { color: var(--accent-text); }
+  @media (prefers-color-scheme: dark) { .box.q h4 { color: var(--accent-text); } }
+
+  /* Built with */
+  .logos { display: flex; flex-wrap: wrap; gap: 12px; }
+  .logos li { list-style: none; background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 10px 18px; font-weight: 600; box-shadow: var(--shadow); }
+  .logos li small { color: var(--muted); font-weight: 500; margin-left: 6px; }
+
+  /* Run your own */
+  .num-list { counter-reset: n; list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .num-list li { counter-increment: n; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 18px 64px; position: relative; box-shadow: var(--shadow); }
+  .num-list li::before { content: counter(n); position: absolute; left: 18px; top: 16px; width: 32px; height: 32px; border-radius: 10px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-weight: 700; }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .95rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Dev Scout home">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M15 15l5 5"/></svg></span>
+      Dev Scout
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#try">Try it</a>
+      <a href="#how">How it works</a>
+      <a href="#scoring">Scoring</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#run">Run your own</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap">
+      <span class="eyebrow">AI hiring agent for small companies</span>
+      <h1>Dev Scout</h1>
+      <p class="tagline">The agent screens. HR decides.</p>
+      <p class="desc">Dev Scout reads each developer CV, analyzes the candidate's GitHub, scores them against the criteria HR set for the role, and ranks everyone in a live dashboard with evidence and tailored interview questions.</p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="https://khas.app.n8n.cloud/form/dev-scout-apply" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9 14l3-3 3 3"/></svg>
+          Apply as a candidate<span class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"> (opens in a new tab)</span>
+        </a>
+        <a class="btn btn-secondary" href="https://devscout-hiring.lovable.app" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          Open the HR dashboard<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"> (opens in a new tab)</span>
+        </a>
+      </div>
+      <a class="gh-link" href="https://github.com/Omar-Khas/dev-scout">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <section id="try">
+    <div class="wrap">
+      <span class="eyebrow">Live demo</span>
+      <h2>Try it in 3 steps</h2>
+      <p class="lead">Everything is already running. No setup, no account. The whole loop takes about two minutes.</p>
+      <div class="grid g3 steps">
+        <article class="card step">
+          <span class="step-num" aria-hidden="true">1</span>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9 14l3-3 3 3"/></svg></div>
+          <h3>Step 1: Apply</h3>
+          <ol>
+            <li>Open the <a href="https://khas.app.n8n.cloud/form/dev-scout-apply" target="_blank" rel="noopener">application form</a>.</li>
+            <li>Type a role: <span class="pill">Software Intern</span> or <span class="pill">Backend Developer</span></li>
+            <li>Upload a PDF CV.</li>
+          </ol>
+          <a class="mini-btn" href="https://raw.githubusercontent.com/Omar-Khas/dev-scout/main/samples/cv_with_github.pdf" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            Download a sample CV (PDF)
+          </a>
+          <p class="note"><strong>Prefer email?</strong> Send a PDF CV with the role in the subject, for example <em>Application: Backend Developer</em>. The demo inbox address is in the submission form.</p>
+        </article>
+
+        <article class="card step">
+          <span class="step-num" aria-hidden="true">2</span>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></div>
+          <h3>Step 2: Wait about 1 minute</h3>
+          <p>While you wait, the agent:</p>
+          <ol>
+            <li>Reads the CV</li>
+            <li>Analyzes the candidate's GitHub</li>
+            <li>Scores them against the role's criteria</li>
+          </ol>
+          <p class="note">If something is missing, like no GitHub link, the candidate is still scored and the gap is recorded instead of guessed.</p>
+        </article>
+
+        <article class="card step">
+          <span class="step-num" aria-hidden="true">3</span>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+          <h3>Step 3: Open the dashboard</h3>
+          <ol>
+            <li>Open the <a href="https://devscout-hiring.lovable.app" target="_blank" rel="noopener">HR dashboard</a>.</li>
+            <li>Connect with the access key provided in the submission form.</li>
+            <li>Find your candidate in the ranking and click them to see the full profile.</li>
+          </ol>
+          <p class="note">The access key is not published on this page. You will find it in the submission form.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="roles">
+    <div class="wrap">
+      <div class="grid g2" style="align-items:center">
+        <div>
+          <span class="eyebrow">For HR</span>
+          <h2>Create your own role</h2>
+          <p class="lead" style="margin-bottom:0">Every role has its own weighted criteria. New applications for that role are scored with exactly those criteria, so the ranking reflects what you care about.</p>
+        </div>
+        <ol class="card clean" style="list-style:none;margin:0;display:grid;gap:14px">
+          <li style="display:flex;gap:14px;align-items:center"><span class="pill">1</span> Open <strong>Roles</strong> in the dashboard and click <strong>New role</strong>.</li>
+          <li style="display:flex;gap:14px;align-items:center"><span class="pill">2</span> Pick a template to start from.</li>
+          <li style="display:flex;gap:14px;align-items:center"><span class="pill">3</span> Adjust the weights. A live preview shows each criterion's share of the score.</li>
+          <li style="display:flex;gap:14px;align-items:center"><span class="pill">4</span> Save. The next applications are scored with your criteria.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <span class="eyebrow">Under the hood</span>
+      <h2>How the agent works</h2>
+      <p class="lead">One n8n workflow runs every application from intake to HR notification.</p>
+      <ol class="flow" aria-label="Agent pipeline, in order">
+        <li><div class="node"><strong>Form or Email</strong><span class="d">A candidate applies on the web form or emails a PDF CV.</span></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></li>
+        <li><div class="node"><strong>Match role</strong><span class="d">The application is matched to an open role and its criteria.</span></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></li>
+        <li><div class="node"><strong>Read CV</strong><span class="tech">Claude</span><span class="d">Turns the PDF into structured data, including hidden links.</span></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></li>
+        <li><div class="node"><strong>Analyze GitHub</strong><span class="tech">GitHub API</span><span class="d">Measures consistency, variety, collaboration and best repos, with no AI.</span></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></li>
+        <li><div class="node"><strong>Score</strong><span class="tech">Claude + math</span><span class="d">Claude rates each criterion with evidence; code computes the final score.</span></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></li>
+        <li><div class="node"><strong>Save</strong><span class="d">One row per candidate and role, updated if they apply again.</span></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></li>
+        <li><div class="node out"><strong>HR email + Dashboard</strong><span class="d">HR gets an alert and the candidate appears in the live ranking.</span></div><span class="arrow" aria-hidden="true"></span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="alt" id="scoring">
+    <div class="wrap">
+      <span class="eyebrow">Transparent by design</span>
+      <h2>How scoring works</h2>
+      <p class="lead">Claude scores each criterion from 0 to 10 and writes one sentence of evidence. The final 0 to 100 score is calculated in code from HR's weights. The AI never invents the final number.</p>
+      <div class="grid g2">
+        <div class="card">
+          <h3>The formula</h3>
+          <div class="formula" role="math" aria-label="score equals round of sum of criterion score times weight, divided by sum of 10 times weight, times 100">score = round( sum(score × weight) / sum(10 × weight) × 100 )</div>
+          <h3>Fit labels</h3>
+          <div class="fits">
+            <div class="fit strong">Strong fit<small>70 and above</small></div>
+            <div class="fit possible">Possible fit<small>50 to 69</small></div>
+            <div class="fit weak">Weak fit<small>Below 50</small></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Worked example</h3>
+          <div class="table-wrap">
+            <table>
+              <caption style="text-align:left;color:var(--muted);font-size:.9rem;margin-bottom:6px">Weights 3, 3, 2, 1, 1 and scores 5, 3, 4, 2, 9</caption>
+              <thead><tr><th scope="col">Weight</th><th scope="col" class="num">Score</th><th scope="col" class="num">Points</th><th scope="col" class="num">Max</th></tr></thead>
+              <tbody>
+                <tr><td>3</td><td class="num">5</td><td class="num">15</td><td class="num">30</td></tr>
+                <tr><td>3</td><td class="num">3</td><td class="num">9</td><td class="num">30</td></tr>
+                <tr><td>2</td><td class="num">4</td><td class="num">8</td><td class="num">20</td></tr>
+                <tr><td>1</td><td class="num">2</td><td class="num">2</td><td class="num">10</td></tr>
+                <tr><td>1</td><td class="num">9</td><td class="num">9</td><td class="num">10</td></tr>
+              </tbody>
+              <tfoot><tr><td>Total</td><td></td><td class="num">43</td><td class="num">100</td></tr></tfoot>
+            </table>
+          </div>
+          <p style="margin-top:14px">(15 + 9 + 8 + 2 + 9) / 100 × 100 = <strong>43</strong>, a Weak fit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="preview">
+    <div class="wrap">
+      <span class="eyebrow">The output</span>
+      <h2>What HR sees</h2>
+      <p class="lead">Every candidate gets a profile with the score, the evidence behind it, strengths, concerns and interview questions written for that person. This one uses a fictional test candidate.</p>
+      <article class="card mock" aria-label="Example candidate profile with fictional data">
+        <span class="tag-example">Example</span>
+        <div class="mock-head">
+          <div class="who">
+            <div class="avatar" aria-hidden="true">ST</div>
+            <div>
+              <h3>Samira Testova</h3>
+              <p>Backend Developer · Cairo, Egypt · Applied for Software Intern</p>
+            </div>
+          </div>
+          <div class="scorebox">
+            <div class="score">45<small> / 100</small></div>
+            <span class="badge weak">Weak fit</span>
+          </div>
+        </div>
+
+        <div class="crit">
+          <div class="crit-top"><span>Programming fundamentals</span><span>5 / 10 · weight 3</span></div>
+          <div class="bar" role="img" aria-label="5 out of 10"><span style="width:50%"></span></div>
+          <p>The CV lists Python, SQL and Docker with 5 years of backend work building payment APIs, but GitHub shows only CSS/HTML repos and no Python code.</p>
+        </div>
+        <div class="crit">
+          <div class="crit-top"><span>Relevant education</span><span>9 / 10 · weight 1</span></div>
+          <div class="bar" role="img" aria-label="9 out of 10"><span style="width:90%"></span></div>
+          <p>The CV lists a BSc in Computer Science from Example University (2019).</p>
+        </div>
+
+        <div class="mock-cols">
+          <div class="box s"><h4>Strength</h4><p>5 years of professional backend experience per CV (payment APIs, REST services)</p></div>
+          <div class="box c"><h4>Concern</h4><p>No public code that matches the CV skills (Python, SQL, Docker, React)</p></div>
+          <div class="box q"><h4>Interview question</h4><p>Your CV links the GitHub account octocat, whose public repos are demos. Is this your own account, and do you have any public code samples in Python?</p></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="alt" id="impact">
+    <div class="wrap">
+      <span class="eyebrow">Business impact</span>
+      <h2>Impact</h2>
+      <p class="lead">These are estimates based on typical manual screening time, not a measured study.</p>
+      <div class="card table-wrap">
+        <table>
+          <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Estimated impact: manual screening compared with Dev Scout</caption>
+          <thead><tr><th scope="col">Estimate</th><th scope="col">Manual screening</th><th scope="col">With Dev Scout</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" style="text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--text)">Time per CV (read CV, check GitHub, write notes)</th><td>~20 minutes</td><td>~1 minute to review the ranked result</td></tr>
+            <tr><th scope="row" style="text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--text)">50 applicants for one role</th><td>~17 hours of HR time</td><td>under 1 hour</td></tr>
+            <tr><th scope="row" style="text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--text)">AI cost per CV</th><td>none</td><td>a few US cents (2 Claude calls)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid g3" style="margin-top:20px">
+        <div class="card"><h3>Hours saved</h3><p style="margin:0;color:var(--muted)">About 19 minutes per CV, tracked automatically by n8n on every run.</p></div>
+        <div class="card"><h3>Cost saved</h3><p style="margin:0;color:var(--muted)">Fewer interviews with candidates whose CV claims aren't backed by evidence.</p></div>
+        <div class="card"><h3>Revenue protected</h3><p style="margin:0;color:var(--muted)">Faster shortlisting fills roles sooner, so projects start sooner.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap">
+      <div class="grid g2" style="align-items:start">
+        <div>
+          <span class="eyebrow">Privacy</span>
+          <h2>Only what hiring needs</h2>
+          <p class="lead" style="margin-bottom:0">Dev Scout stores professional information and nothing that could bias the ranking.</p>
+        </div>
+        <div class="card">
+          <ul class="clean">
+            <li><strong>Stored:</strong> name, email, phone, links and professional information only.</li>
+            <li><strong>Never stored:</strong> birth date, national ID, home address, photo. Leaving out the birth date also keeps age out of the ranking.</li>
+            <li>The form requires consent. Email applicants are told in the auto-reply that their data is stored and how to ask for removal.</li>
+            <li style="margin-bottom:0">The dashboard requires an access key. Keys and credentials are not in the repo.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="run">
+    <div class="wrap">
+      <span class="eyebrow">Self-host</span>
+      <h2>Run your own copy</h2>
+      <p class="lead">About 20 minutes with an n8n account, a Gmail account and an Anthropic API key or n8n AI credits.</p>
+      <ol class="num-list">
+        <li>Create the <strong>jobs</strong> and <strong>candidates</strong> Data Tables in n8n.</li>
+        <li>Import the two workflows and connect Gmail and Claude.</li>
+        <li>Set a long random access key and publish both workflows.</li>
+        <li>Build the dashboard in Lovable from the included prompt.</li>
+      </ol>
+      <a class="btn btn-secondary" href="https://github.com/Omar-Khas/dev-scout/blob/main/docs/setup.md">Read the full setup guide</a>
+    </div>
+  </section>
+
+  <section id="built">
+    <div class="wrap">
+      <span class="eyebrow">Stack</span>
+      <h2>Built with</h2>
+      <ul class="logos" style="padding:0;margin:0">
+        <li>n8n<small>workflows, forms, Data Tables</small></li>
+        <li>Claude<small>CV reading and scoring</small></li>
+        <li>GitHub API<small>activity analysis</small></li>
+        <li>Gmail<small>intake and alerts</small></li>
+        <li>Lovable<small>HR dashboard</small></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built by Omar Khas for Agents at Work 2026</span>
+    <a href="https://github.com/Omar-Khas/dev-scout">github.com/Omar-Khas/dev-scout</a>
+  </div>
+</footer>
+</body>
+</html>
