@@ -1,0 +1,1017 @@
+{
+  "name": "Dev Scout - API",
+  "nodes": [
+    {
+      "id": "962f2378-8172-4eb2-9433-8d98abe368e6",
+      "name": "GET jobs",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "devscout/jobs",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "6c0d7ccb-fac0-4b06-9ec0-fe17311ad427"
+    },
+    {
+      "id": "dde50577-87a1-428c-889f-48f40e6a3d3a",
+      "name": "Access key",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        272,
+        416
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "access-key",
+              "name": "access_key",
+              "value": "CHANGE_ME",
+              "type": "string"
+            },
+            {
+              "id": "route",
+              "name": "route",
+              "value": "={{ $('GET jobs').isExecuted ? 'jobs' : ($('GET candidates').isExecuted ? 'candidates' : ($('GET candidate').isExecuted ? 'candidate' : ($('POST job').isExecuted ? 'job' : 'status'))) }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f43e6e32-67c0-4515-97ea-285d4a3dc8cb",
+      "name": "GET candidates",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        192
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "devscout/candidates",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "e2ae1997-ba7d-408c-a2ee-d8defdcfad58"
+    },
+    {
+      "id": "c656ad04-2b12-4812-a8a3-3eccd20ec7d7",
+      "name": "GET candidate",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        384
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "devscout/candidate",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "bf401e81-9983-4332-92c6-5260806f8c9f"
+    },
+    {
+      "id": "34383e7c-d7fc-4c14-bf06-35ec3056364a",
+      "name": "POST status",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        576
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "devscout/status",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "6096a316-ec52-4172-8a74-903944ddc7bf"
+    },
+    {
+      "id": "0a701fa7-5e5f-4d1b-94eb-05e21df9df17",
+      "name": "POST job",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        768
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "devscout/job",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "6a2d130d-7a3d-41fb-911b-b9412ff7e956"
+    },
+    {
+      "id": "8a3f140c-ff3b-47ca-899b-1173f75e5b6e",
+      "name": "Key valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        496,
+        416
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "keycheck",
+              "leftValue": "={{ String(($json.query || {}).key || \"\") }}",
+              "rightValue": "={{ $json.access_key }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "33dd6ad0-a89d-456e-b1b9-fd3040032402",
+      "name": "Route",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        768
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r0",
+                    "leftValue": "={{ $json.route }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "jobs"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                }
+              },
+              "outputKey": "jobs",
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r1",
+                    "leftValue": "={{ $json.route }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "candidates"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                }
+              },
+              "outputKey": "candidates",
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r2",
+                    "leftValue": "={{ $json.route }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "candidate"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                }
+              },
+              "outputKey": "candidate",
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r3",
+                    "leftValue": "={{ $json.route }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "status"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                }
+              },
+              "outputKey": "status",
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r4",
+                    "leftValue": "={{ $json.route }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "job"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                }
+              },
+              "outputKey": "job",
+              "renameOutput": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4c0fd43f-85f1-4bb2-b520-fea94f707ecc",
+      "name": "Read jobs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        512
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "jobs"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "b0bf27a9-c0eb-4018-91cd-d63cfd14572d",
+      "name": "Build jobs response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        512
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.job_id);\nconst jobs = rows.map(r => {\n  let criteria = [];\n  try { const p = JSON.parse(r.criteria); if (Array.isArray(p)) criteria = p; } catch (e) { criteria = []; }\n  return { job_id: r.job_id, title: r.title, email_keyword: r.email_keyword || r.title, criteria: criteria, active: r.active === true || r.active === 'true' };\n});\nreturn [{ json: { status: 200, body: { jobs: jobs } } }];"
+      }
+    },
+    {
+      "id": "2a26336c-49d5-4729-be8f-4b9f7073e01d",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1920,
+        896
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "55be3b36-f3ee-442d-8270-408e0e09dd3e",
+      "name": "Read candidates",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        704
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "candidates"
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "7e0e0a87-1c9b-44af-bab6-435a2342ced4",
+      "name": "Build candidates response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        704
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const q = $('Access key').first().json.query || {};\nconst jobId = String(q.job_id || '').trim();\nlet rows = $input.all().map(i => i.json).filter(r => r && r.candidate_id);\nif (jobId) rows = rows.filter(r => r.job_id === jobId);\nconst list = rows.map(r => {\n  let rep = null;\n  try { rep = JSON.parse(r.report); } catch (e) { rep = null; }\n  const cand = (rep && rep.candidate) || {};\n  const skills = Array.isArray(cand.skills) ? cand.skills.slice(0, 5) : [];\n  const strengths = (rep && Array.isArray(rep.strengths)) ? rep.strengths.slice(0, 2) : [];\n  return {\n    candidate_id: r.candidate_id,\n    job_id: r.job_id,\n    name: r.name,\n    email: r.email,\n    phone: r.phone || '',\n    headline: r.headline,\n    github_username: r.github_username,\n    score: (typeof r.score === 'number') ? r.score : null,\n    status: r.status,\n    created_at: r.created_at,\n    top_skills: skills,\n    strengths: strengths\n  };\n});\nlist.sort((a, b) => {\n  const sa = (a.score === null) ? -1 : a.score;\n  const sb = (b.score === null) ? -1 : b.score;\n  return sb - sa;\n});\nreturn [{ json: { status: 200, body: { candidates: list } } }];"
+      }
+    },
+    {
+      "id": "8520cb8d-ed49-4f7a-ad4d-eb22075d644b",
+      "name": "Read candidate",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        896
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "candidates"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "candidate_id",
+              "condition": "eq",
+              "keyValue": "={{ String((($('Access key').item.json.query) || {}).id || '') }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "73842158-4a94-4924-8ca9-eaaebeb251df",
+      "name": "Build candidate response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        896
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.all().map(i => i.json).find(r => r && r.candidate_id);\nif (!row) return [{ json: { status: 404, body: { error: 'candidate not found' } } }];\nlet rep = null;\ntry { rep = JSON.parse(row.report); } catch (e) { rep = null; }\nif (!rep || typeof rep !== 'object') return [{ json: { status: 500, body: { error: 'report could not be read' } } }];\nconst body = Object.assign({}, rep, { email: row.email, phone: row.phone || '', status: row.status });\nreturn [{ json: { status: 200, body: body } }];"
+      }
+    },
+    {
+      "id": "e7105630-78ea-4091-a84a-eea52976a0ce",
+      "name": "Validate status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        1168
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const b = $json.body || {};\nconst id = String(b.candidate_id || '').trim();\nconst st = String(b.status || '').trim().toLowerCase();\nconst allowed = ['new', 'shortlisted', 'interview', 'rejected'];\nif (!id) return { json: { valid: false, status: 400, body: { error: 'candidate_id is required' } } };\nif (allowed.indexOf(st) === -1) return { json: { valid: false, status: 400, body: { error: 'status must be one of: new, shortlisted, interview, rejected' } } };\nreturn { json: { valid: true, candidate_id: id, new_status: st } };"
+      }
+    },
+    {
+      "id": "a7f93ecd-5642-4648-8630-cbcab4d90f13",
+      "name": "Status valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        1168
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "sv",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "999df769-d380-49b2-8364-d5228d8dc7a0",
+      "name": "Update status",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        1088
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "candidates"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "candidate_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.candidate_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.new_status }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "bbc7ad45-cae8-4fbb-9315-b25bc3190733",
+      "name": "Status result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1088
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const updated = $input.all().map(i => i.json).filter(r => r && r.id !== undefined);\nif (!updated.length) return [{ json: { status: 404, body: { error: 'candidate not found' } } }];\nreturn [{ json: { status: 200, body: { ok: true } } }];"
+      }
+    },
+    {
+      "id": "349e2069-3bb4-4ab1-94db-9fdfdc81f9a7",
+      "name": "Validate job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        1360
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const b = $json.body || {};\nconst str = v => (typeof v === 'string' ? v.trim() : (v === undefined || v === null ? '' : String(v).trim()));\nconst slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);\nconst title = str(b.title);\nif (!title) return { json: { valid: false, status: 400, body: { error: 'title is required' } } };\nconst jobId = slug(str(b.job_id) || title);\nif (!jobId) return { json: { valid: false, status: 400, body: { error: 'job_id could not be built from the title' } } };\nlet crit = b.criteria;\nif (typeof crit === 'string') { try { crit = JSON.parse(crit); } catch (e) { crit = null; } }\nif (!Array.isArray(crit)) return { json: { valid: false, status: 400, body: { error: 'criteria must be a list' } } };\nconst clean = [];\nfor (const c of crit) {\n  const name = str(c && c.name);\n  if (!name) continue;\n  let w = Number(c && c.weight);\n  if (!isFinite(w) || w <= 0) w = 1;\n  w = Math.min(10, Math.round(w));\n  clean.push({ name: name.slice(0, 80), description: str(c && c.description).slice(0, 300), weight: w });\n}\nif (!clean.length) return { json: { valid: false, status: 400, body: { error: 'add at least one criterion with a name' } } };\nconst active = !(b.active === false || b.active === 'false');\nconst kw = str(b.email_keyword) || title;\nreturn { json: { valid: true, job_id: jobId, title: title.slice(0, 100), email_keyword: kw.slice(0, 100), criteria_json: JSON.stringify(clean), criteria: clean, active: active } };"
+      }
+    },
+    {
+      "id": "b67970a8-8f74-4fe4-ac75-7db7902e56ca",
+      "name": "Job valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        1360
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "jv",
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              },
+              "rightValue": ""
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "1179ebea-e4df-4a93-92be-a9d88047ea99",
+      "name": "Save job",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        1312
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "jobs"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "job_id",
+              "keyValue": "={{ $json.job_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [],
+          "value": {
+            "active": "={{ $json.active }}",
+            "criteria": "={{ $json.criteria_json }}",
+            "email_keyword": "={{ $json.email_keyword }}",
+            "job_id": "={{ $json.job_id }}",
+            "title": "={{ $json.title }}"
+          }
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "f9a5f9f1-7568-494f-a05a-6365f8c0663d",
+      "name": "Job result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        1312
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const v = $('Validate job').first().json;\nconst saved = $input.all().map(i => i.json).filter(r => r && r.id !== undefined);\nif (!saved.length) return [{ json: { status: 500, body: { error: 'job could not be saved' } } }];\nreturn [{ json: { status: 200, body: { ok: true, job: { job_id: v.job_id, title: v.title, email_keyword: v.email_keyword, criteria: v.criteria, active: v.active } } } }];"
+      }
+    },
+    {
+      "id": "1fea3485-d5a2-477f-8ce1-ec47ab00c5b7",
+      "name": "Unauthorized",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        800,
+        320
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "st",
+              "name": "status",
+              "value": 401,
+              "type": "number"
+            },
+            {
+              "id": "bd",
+              "name": "body",
+              "value": "={{ { error: \"unauthorized\" } }}",
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "446fa85d-6680-4f6a-94ea-c0761fedfe47",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        320
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "GET jobs": {
+      "main": [
+        [
+          {
+            "node": "Access key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET candidates": {
+      "main": [
+        [
+          {
+            "node": "Access key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET candidate": {
+      "main": [
+        [
+          {
+            "node": "Access key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST status": {
+      "main": [
+        [
+          {
+            "node": "Access key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST job": {
+      "main": [
+        [
+          {
+            "node": "Access key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Access key": {
+      "main": [
+        [
+          {
+            "node": "Key valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Key valid?": {
+      "main": [
+        [
+          {
+            "node": "Route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route": {
+      "main": [
+        [
+          {
+            "node": "Read jobs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read candidates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read candidate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validate status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validate job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read jobs": {
+      "main": [
+        [
+          {
+            "node": "Build jobs response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build jobs response": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read candidates": {
+      "main": [
+        [
+          {
+            "node": "Build candidates response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build candidates response": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read candidate": {
+      "main": [
+        [
+          {
+            "node": "Build candidate response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build candidate response": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate status": {
+      "main": [
+        [
+          {
+            "node": "Status valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status valid?": {
+      "main": [
+        [
+          {
+            "node": "Update status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update status": {
+      "main": [
+        [
+          {
+            "node": "Status result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status result": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate job": {
+      "main": [
+        [
+          {
+            "node": "Job valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job valid?": {
+      "main": [
+        [
+          {
+            "node": "Save job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save job": {
+      "main": [
+        [
+          {
+            "node": "Job result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job result": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unauthorized": {
+      "main": [
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

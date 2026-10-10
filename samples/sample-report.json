@@ -1,0 +1,84 @@
+{
+  "candidate_id": "c045fwm51ilyjh9",
+  "job_id": "software-intern",
+  "job_title": "Software Intern",
+  "source": "form",
+  "generated_at": "2026-10-10T19:10:00.280Z",
+  "email": "samira.testova@example.com",
+  "phone": "+20 100 555 0199",
+  "status": "new",
+  "username": "octocat",
+  "name": "Samira Testova",
+  "public_repos": 8,
+  "followers": 24514,
+  "account_created": "2011-01-25T18:44:36Z",
+  "candidate": {
+    "name": "Samira Testova",
+    "headline": "Backend Developer",
+    "phone": "+20 100 555 0199",
+    "location": "Cairo, Egypt",
+    "years_experience": 5,
+    "skills": ["Python", "SQL", "Docker", "React"],
+    "experience": [
+      {"title": "Senior Backend Developer", "company": "Nile Fintech (fictional)", "start": "2022", "end": "Present", "summary": "Built payment APIs in Python and PostgreSQL; containerised services with Docker."},
+      {"title": "Backend Developer", "company": "Delta Apps (fictional)", "start": "2020", "end": "2022", "summary": "Maintained REST services and a small React admin dashboard."}
+    ],
+    "education": [{"degree": "BSc Computer Science", "school": "Example University", "year": "2019"}],
+    "links": {"github": "https://github.com/octocat", "linkedin": "https://www.linkedin.com/in/samira-testova-example", "portfolio": ""}
+  },
+  "score": 45,
+  "criteria_scores": [
+    {"name": "Programming fundamentals", "score": 5, "weight": 3, "evidence": "The CV lists Python, SQL and Docker with 5 years of backend work building payment APIs, but GitHub shows only CSS/HTML repos and no Python code."},
+    {"name": "Own projects", "score": 3, "weight": 3, "evidence": "GitHub has 6 owned repos, but they are demo/starter repos (Spoon-Knife, Hello-World, git-consortium) with no evident real project, and the CV links no portfolio."},
+    {"name": "Consistency", "score": 5, "weight": 2, "evidence": "The account dates from 2011 and shows 8 active months, but the best repos are mostly demo repos with sporadic pushes, so steady coding is not clearly shown."},
+    {"name": "Collaboration", "score": 2, "weight": 1, "evidence": "GitHub shows 0 merged PRs into others' projects; the CV only mentions work in a professional team setting."},
+    {"name": "Relevant education", "score": 9, "weight": 1, "evidence": "The CV lists a BSc in Computer Science from Example University (2019)."}
+  ],
+  "strengths": [
+    "BSc in Computer Science",
+    "5 years of professional backend experience per CV (payment APIs, REST services)",
+    "Long-standing GitHub account since 2011 with a large following"
+  ],
+  "concerns": [
+    "No public code that matches the CV skills (Python, SQL, Docker, React)",
+    "Public repos are demos or starters, not original projects",
+    "No merged pull requests to others' projects",
+    "The CV is for a senior backend profile, which is a mismatch with a Software Intern role, and the GitHub profile may not belong to the candidate"
+  ],
+  "summary": {
+    "strongest_domain": "CSS",
+    "top_languages": [{"language": "CSS", "owned_repos": 1}, {"language": "HTML", "owned_repos": 1}],
+    "top_topics": [],
+    "owned_repos": 6,
+    "forked_repos": 2,
+    "verdict": "6 original and 2 forked public repositories, strongest area: CSS, 21011 stars in total, 0 merged pull requests into projects owned by others."
+  },
+  "metrics": {
+    "collaboration": {"merged_prs_total": 0, "merged_prs_into_own_repos": 0, "merged_prs_into_others": 0},
+    "total_stars": 21011,
+    "variety_distinct_languages": 2,
+    "variety_distinct_topics": 0,
+    "consistency_active_months": 8
+  },
+  "best_repos": [
+    {"name": "Spoon-Knife", "description": "This repo is for demonstration purposes only.", "language": "HTML", "stars": 14092, "forks_count": 159908, "created": "2011-01-27T19:30:43Z", "last_push": "2024-08-21T15:25:42Z", "lifespan_months": 163, "has_description": true, "has_license": false, "topics": []},
+    {"name": "Hello-World", "description": "My first repository on GitHub!", "language": "", "stars": 3805, "forks_count": 7050, "created": "2011-01-26T19:01:12Z", "last_push": "2024-08-20T23:54:42Z", "lifespan_months": 163, "has_description": true, "has_license": false, "topics": []},
+    {"name": "octocat.github.io", "description": "", "language": "CSS", "stars": 1182, "forks_count": 581, "created": "2014-03-18T20:54:39Z", "last_push": "2024-08-11T11:57:01Z", "lifespan_months": 125, "has_description": false, "has_license": false, "topics": []}
+  ],
+  "originality_flags": [],
+  "claims_vs_evidence": [
+    {"skill": "Python", "status": "not_seen", "evidence": ["No Python repos in top languages (CSS, HTML)"]},
+    {"skill": "SQL", "status": "not_seen", "evidence": ["No SQL repos found"]},
+    {"skill": "Docker", "status": "not_seen", "evidence": ["No Docker-related repos or topics found"]},
+    {"skill": "React", "status": "not_seen", "evidence": ["No JavaScript/React repos found"]}
+  ],
+  "interview_questions": [
+    {"repo": "General", "questions": [
+      "Can you walk through the design of the payment APIs you built at Nile Fintech, including how you used PostgreSQL and handled failures?",
+      "Your CV links the GitHub account octocat, whose public repos are demos. Is this your own account, and do you have any public code samples in Python?",
+      "How did you containerise your services with Docker, and what would you do differently now?"
+    ]},
+    {"repo": "Spoon-Knife", "questions": ["What is your own role in this repo, and how did you use it in your work?"]}
+  ],
+  "data_gaps": []
+}
